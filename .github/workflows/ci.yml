@@ -13,13 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Notify GitLab — pending
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=running&name=cargo+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
       - name: Install Tauri system dependencies
         run: |
           sudo apt-get update
@@ -30,30 +23,17 @@ jobs:
             librsvg2-dev \
             libssl-dev \
             pkg-config
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+
       - name: check
         run: cargo check --manifest-path src-tauri/Cargo.toml
+
       - name: clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
-
-      - name: Notify GitLab — success
-        if: success()
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=success&name=cargo+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Notify GitLab — failure
-        if: failure()
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=failed&name=cargo+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
   frontend:
     name: svelte check
@@ -61,35 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Notify GitLab — pending
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=running&name=svelte+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
       - uses: pnpm/action-setup@v4
         with:
           version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
       - run: pnpm install
       - run: pnpm check
-
-      - name: Notify GitLab — success
-        if: success()
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=success&name=svelte+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Notify GitLab — failure
-        if: failure()
-        run: |
-          curl -s --request POST \
-            --header "PRIVATE-TOKEN: ${{ secrets.GITLAB_TOKEN }}" \
-            "https://gitlab.com/api/v4/projects/moloo4ni%2Fcabbage/statuses/${{ github.event.pull_request.head.sha || github.sha }}" \
-            --data "state=failed&name=svelte+check&target_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
