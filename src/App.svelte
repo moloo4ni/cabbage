@@ -1,14 +1,14 @@
 <script lang="ts">
   import './app.css';
   import { api } from './lib/api';
-  import { activeVault, fileTree, activeNotePath, isSyncing, backlinks } from './lib/stores';
+  import { activeVault, fileTree, activeNotePath, isSyncing, backlinks, theme } from './lib/stores';
   import Editor from './lib/Editor.svelte';
   import HistoryPanel from './lib/HistoryPanel.svelte';
   import GraphView from './lib/GraphView.svelte';
   import { listen } from '@tauri-apps/api/event';
   import { onMount, onDestroy } from 'svelte';
   import {
-    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder
+    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon
   } from 'lucide-svelte';
 
   let noteContent = '';
@@ -146,6 +146,7 @@
   // ── Listen for sync progress events ────────────────────────────────────
 
   onMount(() => {
+    theme.init();
     const p = listen<{ stage: string }>('sync-progress', (event) => {
       syncProgress = event.payload.stage;
     });
@@ -187,6 +188,11 @@
             title="Toggle graph view"
             on:click={() => (showGraph = !showGraph)}
           ><Share2 size={16} /></button>
+          <button
+            class="icon-btn"
+            title="Toggle theme"
+            on:click={() => theme.toggle()}
+          >{#if $theme === 'dark'}<Sun size={16} />{:else}<Moon size={16} />{/if}</button>
           <button
             class="btn sync-btn"
             on:click={handleSync}
@@ -524,7 +530,7 @@
   }
   .path { font-size: 13px; color: var(--text-muted); }
   .header-actions { display: flex; align-items: center; gap: 12px; }
-  .hint-text { font-size: 11px; color: #d1d5db; }
+  .hint-text { font-size: 11px; color: var(--text-hint); }
   .history-toggle {
     font-size: 11px;
     padding: 3px 8px;
