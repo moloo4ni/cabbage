@@ -2,6 +2,7 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { api } from './api';
   import type { GraphData } from './api';
+  import { RotateCcw } from 'lucide-svelte';
 
   export let activeNotePath: string | null = null;
 
@@ -352,7 +353,7 @@
   </div>
 
   <button class="refresh-btn" title="Reload graph" on:click={loadGraph}>
-    Reload
+    <RotateCcw size={14} />
   </button>
 </div>
 
@@ -405,8 +406,10 @@
     position: absolute;
     top: 10px;
     right: 12px;
-    font-size: 11px;
-    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--sidebar-bg);

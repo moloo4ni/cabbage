@@ -7,6 +7,9 @@
   import GraphView from './lib/GraphView.svelte';
   import { listen } from '@tauri-apps/api/event';
   import { onMount, onDestroy } from 'svelte';
+  import {
+    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder
+  } from 'lucide-svelte';
 
   let noteContent = '';
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -183,13 +186,14 @@
             class="icon-btn {showGraph ? 'active' : ''}"
             title="Toggle graph view"
             on:click={() => (showGraph = !showGraph)}
-          >graph</button>
+          ><Share2 size={16} /></button>
           <button
             class="btn sync-btn"
             on:click={handleSync}
             disabled={$isSyncing}
             title="Sync vault with remote"
           >
+            <RefreshCw size={14} class="sync-icon {$isSyncing ? 'spin' : ''}" />
             {$isSyncing ? (syncProgress || 'Syncing...') : 'Sync'}
           </button>
         {/if}
@@ -210,7 +214,7 @@
           class="icon-btn"
           title="New note"
           on:click={() => (showNewNoteInput = !showNewNoteInput)}
-        >+</button>
+        ><Plus size={16} /></button>
       </div>
 
       {#if showNewNoteInput}
@@ -233,7 +237,7 @@
             class="file-node {node.is_dir ? 'dir' : 'file'} {$activeNotePath === node.path ? 'active' : ''}"
             on:click={() => !node.is_dir && openFile(node.path)}
           >
-            <span class="node-icon">{node.is_dir ? '>' : '-'}</span>
+            <span class="node-icon">{#if node.is_dir}<Folder size={14} />{:else}<File size={14} />{/if}</span>
             <span class="node-name">{node.name}</span>
             {#if !node.is_dir}
               <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -241,7 +245,7 @@
                 class="delete-btn"
                 title="Delete note"
                 on:click|stopPropagation={() => handleDeleteNote(node.path)}
-              >x</span>
+              ><Trash2 size={12} /></span>
             {/if}
           </div>
         {/each}
@@ -254,7 +258,7 @@
     {#if errorMessage}
       <div class="error-bar">
         {errorMessage}
-        <button on:click={() => (errorMessage = '')}>x</button>
+        <button on:click={() => (errorMessage = '')}><X size={14} /></button>
       </div>
     {/if}
 
@@ -265,7 +269,7 @@
           class="icon-btn"
           title="Close graph view"
           on:click={() => (showGraph = false)}
-        >x</button>
+        ><X size={16} /></button>
       </div>
       <div class="graph-pane">
         <GraphView
@@ -282,7 +286,7 @@
             class="icon-btn history-toggle {showHistory ? 'active' : ''}"
             title="Toggle history panel"
             on:click={() => (showHistory = !showHistory)}
-          >history</button>
+          ><History size={16} /></button>
         </div>
       </div>
 
@@ -384,13 +388,16 @@
   .icon-btn {
     background: none;
     border: none;
-    font-size: 18px;
     color: var(--text-muted);
     cursor: pointer;
-    line-height: 1;
-    padding: 0 4px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
   }
-  .icon-btn:hover { color: var(--text-main); }
+  .icon-btn:hover { color: var(--text-main); background: rgba(0,0,0,0.05); }
+  .icon-btn.active { color: var(--accent); }
 
   .new-note-form {
     display: flex;
@@ -577,5 +584,8 @@
   .btn:hover:not(:disabled) { opacity: 0.85; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-lg { padding: 10px 20px; font-size: 15px; }
-  .sync-btn { font-size: 12px; padding: 4px 10px; }
+  .sync-btn { font-size: 12px; padding: 4px 10px; display: flex; align-items: center; gap: 4px; }
+  .sync-icon { flex-shrink: 0; }
+  .sync-icon.spin { animation: spin 1s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

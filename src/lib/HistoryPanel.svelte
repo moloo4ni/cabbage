@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, type CommitInfo } from './api';
+  import { RotateCcw } from 'lucide-svelte';
 
   export let relPath: string;
   export let onRestore: (content: string) => void;
@@ -82,7 +83,7 @@
         on:click={restore}
         disabled={restoring}
       >
-        {restoring ? 'restoring…' : 'restore this version'}
+        <RotateCcw size={14} /> {restoring ? 'restoring…' : 'restore'}
       </button>
     {/if}
   </div>
@@ -162,6 +163,9 @@
     border-radius: 4px;
     font-size: 12px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .restore-btn:hover:not(:disabled) { opacity: 0.85; }
   .restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
