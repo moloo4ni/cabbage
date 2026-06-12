@@ -144,14 +144,25 @@ pub fn get_backlinks(
 
 // ── Git sync ─────────────────────────────────────────────────────────────────
 
+#[derive(Clone, serde::Serialize)]
+struct SyncProgress {
+    stage: String,
+}
+
 #[tauri::command]
-pub fn sync(state: State<'_, AppState>) -> Result<cli::GitResult, String> {
+pub async fn sync(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<cli::GitResult, String> {
     let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
 
-    cli::sync_vault(&root)
+    let result = cli::sync_vault(&root, &|stage| {
+        let _ = app.emit_all("sync-progress", SyncProgress {
+            stage: stage.to_string(),
+        });
+    });
+
+    result
 }
 
 // ── Note history ──────────────────────────────────────────────────────────────

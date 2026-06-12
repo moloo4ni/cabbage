@@ -5,6 +5,8 @@
   import Editor from './lib/Editor.svelte';
   import HistoryPanel from './lib/HistoryPanel.svelte';
   import GraphView from './lib/GraphView.svelte';
+  import { listen } from '@tauri-apps/api/event';
+  import { onMount, onDestroy } from 'svelte';
 
   let noteContent = '';
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -13,6 +15,8 @@
   let showHistory = false;
   let showGraph = false;
   let errorMessage = '';
+  let syncProgress = '';
+  let unlistenSync: (() => void) | null = null;
 
   // ── Vault ────────────────────────────────────────────────────────────────
 
@@ -136,16 +140,31 @@
     await handleNavigate(event.detail);
   }
 
+  // ── Listen for sync progress events ────────────────────────────────────
+
+  onMount(() => {
+    const p = listen<{ stage: string }>('sync-progress', (event) => {
+      syncProgress = event.payload.stage;
+    });
+    p.then((unlisten) => { unlistenSync = unlisten; });
+    return () => {
+      unlistenSync?.();
+    };
+  });
+
   // ── Git sync ─────────────────────────────────────────────────────────────
 
   async function handleSync() {
     isSyncing.set(true);
+    syncProgress = 'Starting...';
     errorMessage = '';
     try {
       const result = await api.sync();
       if (!result.success) errorMessage = result.output;
+      else syncProgress = '';
     } catch (e) {
       errorMessage = `Sync failed: ${e}`;
+      syncProgress = '';
     } finally {
       isSyncing.set(false);
     }
@@ -171,7 +190,7 @@
             disabled={$isSyncing}
             title="Sync vault with remote"
           >
-            {$isSyncing ? 'Syncing...' : 'Sync'}
+            {$isSyncing ? (syncProgress || 'Syncing...') : 'Sync'}
           </button>
         {/if}
       </div>

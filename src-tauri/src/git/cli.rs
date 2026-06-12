@@ -248,11 +248,14 @@ pub fn get_note_at_commit(
 /// - Fast-forward when the local branch has not diverged from remote.
 /// - Rebase when local and remote have diverged (maintains a linear history).
 /// - Aborts and returns an error on conflicts.
-pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
+///
+/// `on_progress` is called at each stage with a human-readable stage name.
+pub fn sync_vault(vault_path: &Path, on_progress: &dyn Fn(&str)) -> Result<GitResult, String> {
     let repo = open_repo(vault_path)?;
     let branch = current_branch(&repo)?;
 
     // ── Check for uncommitted changes ───────────────────────────────────────
+    on_progress("Checking repository state...");
     let statuses = repo
         .statuses(None)
         .map_err(|e| format!("Failed to check repo status: {}", e))?;
@@ -271,6 +274,7 @@ pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
     }
 
     // ── Fetch ─────────────────────────────────────────────────────────────
+    on_progress("Fetching from remote...");
     let mut remote = repo
         .find_remote("origin")
         .map_err(|e| format!("Remote 'origin' not found: {}", e))?;
@@ -299,14 +303,17 @@ pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
         .map_err(|e| e.to_string())?;
 
     if analysis.is_up_to_date() {
-        // Local is already equal to or ahead of remote — nothing to integrate.
+        on_progress("Already up to date.");
     } else if analysis.is_fast_forward() {
+        on_progress("Fast-forwarding...");
         fast_forward(&repo, &fetch_commit)?;
     } else {
+        on_progress("Rebasing local commits...");
         do_rebase(&repo, &fetch_commit)?;
     }
 
     // ── Push ──────────────────────────────────────────────────────────────
+    on_progress("Pushing to remote...");
     let mut remote = repo.find_remote("origin").map_err(|e| e.to_string())?;
     let mut push_cb = RemoteCallbacks::new();
     push_cb.credentials(credential_callback);
