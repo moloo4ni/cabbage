@@ -9,7 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import {
     Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon
-  } from 'lucide-svelte';
+  } from '@lucide/svelte';
 
   let noteContent = '';
   let saveTimer: ReturnType<typeof setTimeout> | null = null;

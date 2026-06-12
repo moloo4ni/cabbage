@@ -2,7 +2,7 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import { api } from './api';
   import type { GraphData } from './api';
-  import { RotateCcw } from 'lucide-svelte';
+  import { RotateCcw } from '@lucide/svelte';
 
   export let activeNotePath: string | null = null;
 
