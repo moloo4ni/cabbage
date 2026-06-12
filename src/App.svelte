@@ -143,10 +143,26 @@
     await handleNavigate(event.detail);
   }
 
+  // ── Auto-reopen last vault on startup ───────────────────────────────────
+
+  async function tryRestoreLastVault() {
+    try {
+      const lastPath = await api.getLastVault();
+      if (lastPath) {
+        await api.openVault(lastPath);
+        activeVault.set(lastPath);
+        await refreshFileTree();
+      }
+    } catch {
+      // Last vault no longer exists or inaccessible — ignore silently
+    }
+  }
+
   // ── Listen for sync progress events ────────────────────────────────────
 
   onMount(() => {
     theme.init();
+    tryRestoreLastVault();
     const p = listen<{ stage: string }>('sync-progress', (event) => {
       syncProgress = event.payload.stage;
     });

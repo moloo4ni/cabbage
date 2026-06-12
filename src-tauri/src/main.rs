@@ -15,6 +15,7 @@ fn main() {
             // vault
             commands::pick_and_open_vault,
             commands::open_vault,
+            commands::get_last_vault,
             // file tree
             commands::list_directory,
             // note CRUD

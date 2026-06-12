@@ -45,6 +45,11 @@ export const api = {
         return invoke('open_vault', { path });
     },
 
+    /** Returns the path of the last opened vault, if any. */
+    async getLastVault(): Promise<string | null> {
+        return invoke('get_last_vault');
+    },
+
     // ── File tree ──────────────────────────────────────────────────────────
 
     async listDirectory(subPath: string = ''): Promise<FileNode[]> {

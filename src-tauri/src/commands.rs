@@ -34,8 +34,37 @@ pub async fn open_vault(
     open_vault_path(app, state, path).await
 }
 
+fn persist_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let config = app.config();
+    let dir = tauri::api::path::app_data_dir(&config)
+        .ok_or("Failed to resolve app data directory")?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn save_last_vault(app: &tauri::AppHandle, path: &str) {
+    if let Ok(dir) = persist_dir(app) {
+        let _ = std::fs::write(dir.join("last_vault"), path);
+    }
+}
+
+fn load_last_vault(app: &tauri::AppHandle) -> Option<String> {
+    let dir = persist_dir(app).ok()?;
+    let p = dir.join("last_vault");
+    if p.exists() {
+        std::fs::read_to_string(p).ok()
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+pub fn get_last_vault(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    Ok(load_last_vault(&app))
+}
+
 async fn open_vault_path(
-    _app: tauri::AppHandle,
+    app: tauri::AppHandle,
     state: State<'_, AppState>,
     path: String,
 ) -> Result<String, String> {
@@ -50,6 +79,8 @@ async fn open_vault_path(
     let backlinks = index::build_index(&vault_path);
     *state.current_vault.lock().map_err(|e| e.to_string())? = Some(vault_path.clone());
     *state.backlinks.lock().map_err(|e| e.to_string())? = backlinks;
+
+    save_last_vault(&app, &path);
 
     Ok(path)
 }
