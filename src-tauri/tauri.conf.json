@@ -12,8 +12,8 @@
   "tauri": {
     "allowlist": {
       "shell": { "open": true },
-      "fs": { "all": true, "scope": ["$HOME/**", "$APPDATA/**"] },
-      "dialog": { "all": true }
+      "fs": { "scope": ["$HOME/**", "$APPDATA/**"] },
+      "dialog": { "open": true }
     },
     "bundle": {
       "active": true,

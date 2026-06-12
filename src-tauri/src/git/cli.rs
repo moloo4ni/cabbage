@@ -36,6 +36,15 @@ fn get_signature(repo: &Repository) -> Result<Signature<'static>, String> {
         .map_err(|e| e.to_string())
 }
 
+/// Returns the name of the currently checked-out branch (e.g. "main", "master").
+fn current_branch(repo: &Repository) -> Result<String, String> {
+    let head = repo.head().map_err(|_| "No HEAD reference found".to_string())?;
+    let name = head
+        .shorthand()
+        .ok_or_else(|| "HEAD has no shorthand name".to_string())?;
+    Ok(name.to_string())
+}
+
 /// Credential callback used for every network operation.
 /// Priority order:
 ///   1. SSH key from the running ssh-agent.
@@ -71,7 +80,8 @@ fn credential_callback(
 
     Err(git2::Error::from_str(
         "No suitable credentials found. \
-         Configure an ssh-agent or place an SSH key at ~/.ssh/id_ed25519.",
+         Configure an ssh-agent, place an SSH key at ~/.ssh/ or use HTTPS with a \
+         credential helper.",
     ))
 }
 
@@ -240,6 +250,25 @@ pub fn get_note_at_commit(
 /// - Aborts and returns an error on conflicts.
 pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
     let repo = open_repo(vault_path)?;
+    let branch = current_branch(&repo)?;
+
+    // ── Check for uncommitted changes ───────────────────────────────────────
+    let statuses = repo
+        .statuses(None)
+        .map_err(|e| format!("Failed to check repo status: {}", e))?;
+    let has_dirty = statuses.iter().any(|s| {
+        let flags = s.status();
+        !flags.is_ignored()
+            && (flags.contains(git2::Status::INDEX_NEW)
+                || flags.contains(git2::Status::INDEX_MODIFIED)
+                || flags.contains(git2::Status::INDEX_DELETED)
+                || flags.contains(git2::Status::WT_NEW)
+                || flags.contains(git2::Status::WT_MODIFIED)
+                || flags.contains(git2::Status::WT_DELETED))
+    });
+    if has_dirty {
+        return Err("Uncommitted changes detected. Auto-commit or stash before syncing.".to_string());
+    }
 
     // ── Fetch ─────────────────────────────────────────────────────────────
     let mut remote = repo
@@ -251,8 +280,9 @@ pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
     let mut fetch_opts = FetchOptions::new();
     fetch_opts.remote_callbacks(cb);
 
+    let branch_ref = format!("refs/heads/{}", branch);
     remote
-        .fetch(&["main"], Some(&mut fetch_opts), None)
+        .fetch(&[&branch], Some(&mut fetch_opts), None)
         .map_err(|e| format!("Fetch failed: {}", e))?;
     drop(remote);
 
@@ -283,8 +313,9 @@ pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
     let mut push_opts = PushOptions::new();
     push_opts.remote_callbacks(push_cb);
 
+    let push_spec = format!("{}:{}", branch_ref, branch_ref);
     remote
-        .push(&["refs/heads/main:refs/heads/main"], Some(&mut push_opts))
+        .push(&[&push_spec], Some(&mut push_opts))
         .map_err(|e| format!("Push failed: {}", e))?;
 
     Ok(GitResult {
@@ -296,8 +327,10 @@ pub fn sync_vault(vault_path: &Path) -> Result<GitResult, String> {
 // ── Private integration helpers ───────────────────────────────────────────────
 
 fn fast_forward(repo: &Repository, onto: &AnnotatedCommit) -> Result<(), String> {
+    let branch = current_branch(repo)?;
+    let branch_ref_name = format!("refs/heads/{}", branch);
     let mut head_ref = repo
-        .find_reference("refs/heads/main")
+        .find_reference(&branch_ref_name)
         .map_err(|e| e.to_string())?;
     head_ref
         .set_target(onto.id(), "sync: fast-forward")
