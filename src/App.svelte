@@ -8,7 +8,7 @@
   import { listen } from '@tauri-apps/api/event';
   import { onMount, onDestroy } from 'svelte';
   import {
-    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon, Search as SearchIcon
+    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon, Search as SearchIcon, Settings
   } from '@lucide/svelte';
 
   import type { SearchResult } from './lib/api';
@@ -26,6 +26,7 @@
   let searchResults: SearchResult[] = [];
   let showSearch = false;
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
+  let showSettings = false;
 
   // ── Vault ────────────────────────────────────────────────────────────────
 
@@ -216,6 +217,15 @@
     theme.init();
     tryRestoreLastVault();
     document.addEventListener('keydown', handleGlobalKeydown);
+
+    function handleOutsideClick(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.settings-dropdown') && !target.closest('.icon-btn[title="Settings"]')) {
+        showSettings = false;
+      }
+    }
+    document.addEventListener('click', handleOutsideClick);
+
     const p = listen<{ stage: string }>('sync-progress', (event) => {
       syncProgress = event.payload.stage;
     });
@@ -223,6 +233,7 @@
     return () => {
       unlistenSync?.();
       document.removeEventListener('keydown', handleGlobalKeydown);
+      document.removeEventListener('click', handleOutsideClick);
     };
   });
 
@@ -259,10 +270,10 @@
             on:click={() => (showGraph = !showGraph)}
           ><Share2 size={16} /></button>
           <button
-            class="icon-btn"
-            title="Toggle theme"
-            on:click={() => theme.toggle()}
-          >{#if $theme === 'dark'}<Sun size={16} />{:else}<Moon size={16} />{/if}</button>
+            class="icon-btn {showSettings ? 'active' : ''}"
+            title="Settings"
+            on:click={() => (showSettings = !showSettings)}
+          ><Settings size={16} /></button>
           <button
             class="btn sync-btn"
             on:click={handleSync}
@@ -275,6 +286,19 @@
         {/if}
       </div>
     </div>
+
+    {#if showSettings}
+      <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+      <div class="settings-dropdown">
+        <button class="settings-item" title="Toggle theme" on:click={theme.toggle}>
+          {#if $theme === 'dark'}
+            <Sun size={14} /> Light mode
+          {:else}
+            <Moon size={14} /> Dark mode
+          {/if}
+        </button>
+      </div>
+    {/if}
 
     {#if !$activeVault}
       <div class="vault-prompt">
@@ -518,6 +542,26 @@
     border-radius: 4px;
     font-size: 13px;
   }
+
+  .settings-dropdown {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-color);
+  }
+  .settings-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-main);
+    border-radius: 4px;
+  }
+  .settings-item:hover { background: var(--sidebar-bg); }
 
   .search-area {
     padding: 8px 12px;
