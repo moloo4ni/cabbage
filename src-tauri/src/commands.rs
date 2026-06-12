@@ -199,13 +199,11 @@ pub async fn sync(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<c
     let root = root.clone();
     drop(lock);
 
-    let result = cli::sync_vault(&root, &|stage| {
+    cli::sync_vault(&root, &|stage| {
         let _ = app.emit_all("sync-progress", SyncProgress {
             stage: stage.to_string(),
         });
-    });
-
-    result
+    })
 }
 
 // ── Note history ──────────────────────────────────────────────────────────────
