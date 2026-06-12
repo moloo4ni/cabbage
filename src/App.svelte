@@ -70,12 +70,14 @@
   // ── Auto-save (debounced 1.5 s) ──────────────────────────────────────────
 
   function handleEditorInput(event: CustomEvent<string>) {
-    noteContent = event.detail;
-    if (!$activeNotePath) return;
+    const content = event.detail;
+    noteContent = content;
+    const path = $activeNotePath;
+    if (!path) return;
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
       try {
-        await api.writeNote($activeNotePath!, noteContent);
+        await api.writeNote(path, content);
       } catch (e) {
         errorMessage = `Auto-save failed: ${e}`;
       }

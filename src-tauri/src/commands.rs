@@ -48,8 +48,8 @@ async fn open_vault_path(
     cli::ensure_git_repo(&vault_path)?;
 
     let backlinks = index::build_index(&vault_path);
-    *state.current_vault.lock().unwrap() = Some(vault_path.clone());
-    *state.backlinks.lock().unwrap() = backlinks;
+    *state.current_vault.lock().map_err(|e| e.to_string())? = Some(vault_path.clone());
+    *state.backlinks.lock().map_err(|e| e.to_string())? = backlinks;
 
     Ok(path)
 }
@@ -61,7 +61,7 @@ pub fn list_directory(
     state: State<'_, AppState>,
     sub_path: String,
 ) -> Result<Vec<fs::FileNode>, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     fs::list_directory(root, &sub_path)
 }
@@ -70,7 +70,7 @@ pub fn list_directory(
 
 #[tauri::command]
 pub fn read_note(state: State<'_, AppState>, rel_path: String) -> Result<String, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     fs::read_note(root, &rel_path)
 }
@@ -81,7 +81,7 @@ pub fn write_note(
     rel_path: String,
     content: String,
 ) -> Result<(), String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
@@ -91,7 +91,7 @@ pub fn write_note(
 
     // Rebuild backlinks index after save
     let fresh = index::build_index(&root);
-    *state.backlinks.lock().unwrap() = fresh;
+    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
 
     Ok(())
 }
@@ -101,7 +101,7 @@ pub fn create_note(
     state: State<'_, AppState>,
     rel_path: String,
 ) -> Result<(), String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
@@ -116,7 +116,7 @@ pub fn delete_note(
     state: State<'_, AppState>,
     rel_path: String,
 ) -> Result<(), String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
@@ -125,7 +125,7 @@ pub fn delete_note(
     cli::auto_commit(&root, "--all")?;
 
     let fresh = index::build_index(&root);
-    *state.backlinks.lock().unwrap() = fresh;
+    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
 
     Ok(())
 }
@@ -138,7 +138,7 @@ pub fn get_backlinks(
     state: State<'_, AppState>,
     note_name: String,
 ) -> Result<Vec<String>, String> {
-    let lock = state.backlinks.lock().unwrap();
+    let lock = state.backlinks.lock().map_err(|e| e.to_string())?;
     Ok(lock.get(&note_name).cloned().unwrap_or_default())
 }
 
@@ -146,7 +146,7 @@ pub fn get_backlinks(
 
 #[tauri::command]
 pub fn sync(state: State<'_, AppState>) -> Result<cli::GitResult, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
@@ -162,7 +162,7 @@ pub fn get_note_history(
     state: State<'_, AppState>,
     rel_path: String,
 ) -> Result<Vec<cli::CommitInfo>, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     cli::get_note_history(root, &rel_path)
 }
@@ -174,7 +174,7 @@ pub fn get_note_at_commit(
     rel_path: String,
     commit_hash: String,
 ) -> Result<String, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     cli::get_note_at_commit(root, &commit_hash, &rel_path)
 }
@@ -187,7 +187,7 @@ pub fn restore_note_version(
     rel_path: String,
     commit_hash: String,
 ) -> Result<String, String> {
-    let lock = state.current_vault.lock().unwrap();
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(lock);
@@ -197,7 +197,7 @@ pub fn restore_note_version(
     cli::auto_commit(&root, &rel_path)?;
 
     let fresh = index::build_index(&root);
-    *state.backlinks.lock().unwrap() = fresh;
+    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
 
     Ok(content)
 }
@@ -227,7 +227,7 @@ pub struct GraphData {
 pub fn get_graph(state: State<'_, AppState>) -> Result<GraphData, String> {
     use walkdir::WalkDir;
 
-    let vault_lock = state.current_vault.lock().unwrap();
+    let vault_lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = vault_lock.as_ref().ok_or("Vault not opened")?;
     let root = root.clone();
     drop(vault_lock);
@@ -253,7 +253,7 @@ pub fn get_graph(state: State<'_, AppState>) -> Result<GraphData, String> {
 
     // Build directed edges from the backlinks index.
     // backlinks[target] = Vec<source_rel_path>  =>  edge: source_name -> target
-    let bl_lock = state.backlinks.lock().unwrap();
+    let bl_lock = state.backlinks.lock().map_err(|e| e.to_string())?;
     let mut edges: Vec<GraphEdge> = Vec::new();
 
     for (target, sources) in bl_lock.iter() {
