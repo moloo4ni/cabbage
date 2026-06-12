@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use std::collections::HashSet;
-use tauri::State;
+use tauri::{Manager, State};
 use crate::state::AppState;
 use crate::core::{fs, index, search};
 use crate::git::cli;
