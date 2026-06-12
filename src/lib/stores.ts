@@ -5,11 +5,11 @@ function createTheme() {
   const stored = typeof localStorage !== 'undefined' && localStorage.getItem('cabbage-theme');
   const preferDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const initial = stored || (preferDark ? 'dark' : 'light');
-  const { subscribe, set } = writable<string>(initial);
+  const { subscribe, set, update } = writable<string>(initial);
   return {
     subscribe,
     toggle: () => {
-      set((current: string) => {
+      update((current: string) => {
         const next = current === 'dark' ? 'light' : 'dark';
         localStorage.setItem('cabbage-theme', next);
         document.documentElement.classList.toggle('dark', next === 'dark');

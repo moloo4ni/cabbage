@@ -8,8 +8,10 @@
   import { listen } from '@tauri-apps/api/event';
   import { onMount, onDestroy } from 'svelte';
   import {
-    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon
+    Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon, Search as SearchIcon
   } from '@lucide/svelte';
+
+  import type { SearchResult } from './lib/api';
 
   let noteContent = '';
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -20,6 +22,10 @@
   let errorMessage = '';
   let syncProgress = '';
   let unlistenSync: (() => void) | null = null;
+  let searchQuery = '';
+  let searchResults: SearchResult[] = [];
+  let showSearch = false;
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ── Vault ────────────────────────────────────────────────────────────────
 
@@ -37,6 +43,52 @@
   async function refreshFileTree() {
     const files = await api.listDirectory('');
     fileTree.set(files);
+  }
+
+  // ── Search ─────────────────────────────────────────────────────────────
+
+  async function handleSearchInput() {
+    const q = searchQuery.trim();
+    if (!q) {
+      searchResults = [];
+      showSearch = false;
+      return;
+    }
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+      try {
+        searchResults = await api.searchNotes(q);
+        showSearch = true;
+      } catch {
+        // ignore search errors silently
+      }
+    }, 200);
+  }
+
+  function handleSearchSelect(result: SearchResult) {
+    searchQuery = '';
+    showSearch = false;
+    searchResults = [];
+    openFile(result.path);
+  }
+
+  function handleSearchKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      showSearch = false;
+      searchQuery = '';
+    }
+  }
+
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      e.preventDefault();
+      showSearch = true;
+      // Focus the search input on next tick
+      setTimeout(() => {
+        const el = document.querySelector<HTMLInputElement>('.search-input');
+        el?.focus();
+      });
+    }
   }
 
   // ── Note navigation ──────────────────────────────────────────────────────
@@ -163,12 +215,14 @@
   onMount(() => {
     theme.init();
     tryRestoreLastVault();
+    document.addEventListener('keydown', handleGlobalKeydown);
     const p = listen<{ stage: string }>('sync-progress', (event) => {
       syncProgress = event.payload.stage;
     });
     p.then((unlisten) => { unlistenSync = unlisten; });
     return () => {
       unlistenSync?.();
+      document.removeEventListener('keydown', handleGlobalKeydown);
     };
   });
 
@@ -215,7 +269,7 @@
             disabled={$isSyncing}
             title="Sync vault with remote"
           >
-            <RefreshCw size={14} class="sync-icon {$isSyncing ? 'spin' : ''}" />
+            <span class="sync-icon {$isSyncing ? 'spin' : ''}"><RefreshCw size={14} /></span>
             {$isSyncing ? (syncProgress || 'Syncing...') : 'Sync'}
           </button>
         {/if}
@@ -250,6 +304,35 @@
           <button class="btn" on:click={handleCreateNote}>Create</button>
         </div>
       {/if}
+
+      <div class="search-area">
+        <div class="search-input-wrap">
+          <span class="search-icon"><SearchIcon size={14} /></span>
+          <input
+            class="search-input"
+            type="text"
+            placeholder="Search notes…  (Ctrl+P)"
+            bind:value={searchQuery}
+            on:input={handleSearchInput}
+            on:keydown={handleSearchKeydown}
+          />
+        </div>
+        {#if showSearch && searchResults.length > 0}
+          <div class="search-results">
+            {#each searchResults as result}
+              <button
+                class="search-result-item"
+                on:click={() => handleSearchSelect(result)}
+              >
+                <span class="search-result-name">{result.name}</span>
+                <span class="search-result-snippet">{result.snippet}</span>
+              </button>
+            {/each}
+          </div>
+        {:else if showSearch && searchQuery.trim() && searchResults.length === 0}
+          <div class="search-empty">No notes found</div>
+        {/if}
+      </div>
 
       <div class="file-tree">
         {#each $fileTree as node}
@@ -435,6 +518,66 @@
     border-radius: 4px;
     font-size: 13px;
   }
+
+  .search-area {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    background: var(--bg-color);
+  }
+  .search-input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+  .search-icon { flex-shrink: 0; color: var(--text-muted); }
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 12px;
+    background: transparent;
+    color: var(--text-main);
+    min-width: 0;
+  }
+  .search-input::placeholder { color: var(--text-hint); }
+  .search-results {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: calc(100% - 4px);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 20;
+  }
+  .search-result-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-main);
+  }
+  .search-result-item:hover { background: var(--sidebar-bg); }
+  .search-result-name { font-weight: 500; }
+  .search-result-snippet { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .search-empty { padding: 12px; font-size: 12px; color: var(--text-muted); text-align: center; }
 
   .file-tree { padding: 6px 8px; flex: 1; overflow-y: auto; }
 

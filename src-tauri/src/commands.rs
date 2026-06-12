@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::collections::HashSet;
 use tauri::State;
 use crate::state::AppState;
-use crate::core::{fs, index};
+use crate::core::{fs, index, search};
 use crate::git::cli;
 
 // ── Vault ─────────────────────────────────────────────────────────────────────
@@ -95,6 +95,18 @@ pub fn list_directory(
     let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
     let root = lock.as_ref().ok_or("Vault not opened")?;
     fs::list_directory(root, &sub_path)
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+
+#[tauri::command]
+pub fn search_notes(
+    state: State<'_, AppState>,
+    query: String,
+) -> Result<Vec<search::SearchResult>, String> {
+    let lock = state.current_vault.lock().map_err(|e| e.to_string())?;
+    let root = lock.as_ref().ok_or("Vault not opened")?;
+    Ok(search::search_notes(root, &query))
 }
 
 // ── Note CRUD ─────────────────────────────────────────────────────────────────

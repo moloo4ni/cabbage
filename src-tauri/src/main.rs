@@ -18,6 +18,8 @@ fn main() {
             commands::get_last_vault,
             // file tree
             commands::list_directory,
+            // search
+            commands::search_notes,
             // note CRUD
             commands::read_note,
             commands::write_note,

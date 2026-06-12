@@ -32,6 +32,12 @@ export interface GraphData {
     edges: GraphEdge[];
 }
 
+export interface SearchResult {
+    path: string;
+    name: string;
+    snippet: string;
+}
+
 export const api = {
     // ── Vault ──────────────────────────────────────────────────────────────
 
@@ -54,6 +60,12 @@ export const api = {
 
     async listDirectory(subPath: string = ''): Promise<FileNode[]> {
         return invoke('list_directory', { subPath });
+    },
+
+    // ── Search ─────────────────────────────────────────────────────────────
+
+    async searchNotes(query: string): Promise<SearchResult[]> {
+        return invoke('search_notes', { query });
     },
 
     // ── Note CRUD ──────────────────────────────────────────────────────────
