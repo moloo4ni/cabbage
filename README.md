@@ -71,7 +71,7 @@ pnpm tauri build
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MPL 2.0 — see [LICENSE](LICENSE).
 
 ## Disclaimer
 
