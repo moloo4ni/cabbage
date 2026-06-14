@@ -132,9 +132,8 @@ pub fn write_note(
     fs::write_note(&root, &rel_path, &content)?;
     cli::auto_commit(&root, &rel_path)?;
 
-    // Rebuild backlinks index after save
-    let fresh = index::build_index(&root);
-    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
+    let mut bl = state.backlinks.lock().map_err(|e| e.to_string())?;
+    index::update_index(&mut bl, &root, &rel_path);
 
     Ok(())
 }
@@ -167,8 +166,8 @@ pub fn delete_note(
     fs::delete_note(&root, &rel_path)?;
     cli::auto_commit(&root, "--all")?;
 
-    let fresh = index::build_index(&root);
-    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
+    let mut bl = state.backlinks.lock().map_err(|e| e.to_string())?;
+    index::remove_file(&mut bl, &rel_path);
 
     Ok(())
 }
@@ -248,8 +247,8 @@ pub fn restore_note_version(
     fs::write_note(&root, &rel_path, &content)?;
     cli::auto_commit(&root, &rel_path)?;
 
-    let fresh = index::build_index(&root);
-    *state.backlinks.lock().map_err(|e| e.to_string())? = fresh;
+    let mut bl = state.backlinks.lock().map_err(|e| e.to_string())?;
+    index::update_index(&mut bl, &root, &rel_path);
 
     Ok(content)
 }

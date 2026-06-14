@@ -183,19 +183,12 @@ pub fn get_note_history(vault_path: &Path, rel_path: &str) -> Result<Vec<CommitI
         let touches = match commit.parent(0) {
             Ok(parent) => {
                 let parent_tree = parent.tree().map_err(|e| e.to_string())?;
+                let mut diffopts = git2::DiffOptions::new();
+                diffopts.pathspec(rel_path);
                 let diff = repo
-                    .diff_tree_to_tree(Some(&parent_tree), Some(&tree), None)
+                    .diff_tree_to_tree(Some(&parent_tree), Some(&tree), Some(&mut diffopts))
                     .map_err(|e| e.to_string())?;
-                diff.deltas().any(|d| {
-                    d.new_file()
-                        .path()
-                        .map(|p| p == target)
-                        .unwrap_or(false)
-                        || d.old_file()
-                            .path()
-                            .map(|p| p == target)
-                            .unwrap_or(false)
-                })
+                diff.deltas().len() > 0
             }
             // Root commit: check that the file exists in the initial tree.
             Err(_) => tree.get_path(target).is_ok(),
