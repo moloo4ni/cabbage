@@ -14,28 +14,32 @@ The core read/write/sync loop is working:
 
 - Open a vault via a native folder-picker dialog — last vault is persisted and reopens automatically on launch
 - Browse the file tree in the sidebar
-- Create and delete notes
+- Create and delete notes (with loading indicators)
 - Edit notes with CodeMirror 6 — Markdown syntax highlighting, line wrapping, minimal theme
 - `[[wiki-links]]` highlighted inline; Ctrl/Cmd+click navigates to the linked note (creates it if it does not exist)
 - Auto-save with a 1.5 s debounce — every save triggers an automatic local Git commit
 - Full-text search — Ctrl+P / Cmd+P opens a fuzzy search box that matches filenames (priority) and content with snippets (up to 20 results)
 - Graph view — canvas force-directed graph of all notes and `[[wikilink]]` connections
 - Sync button runs fetch → fast-forward or rebase → push, all via native libgit2 (no `git` binary required) with progress events
-- On-demand backlinks panel — notes that link to the current note are shown via full file-tree scan
+- Incremental backlinks index — notes that link to the current note are shown via per-file scan (no full tree rebuild on every change)
 - History panel — browse up to 50 commits for the active note, preview any version, restore with one click
 - Dark theme — GitHub Dark palette, auto-detects `prefers-color-scheme`, toggleable from Settings dropdown
+- Loading states — spinners for file open, file tree refresh, graph load, note create/delete
 - Inline error bar for failed operations
 
 ## Architecture
 
 The application is structured as a decoupled system:
 
-- **Frontend (Svelte):** Handles UI rendering and user interactions. Holds no persistent state — everything is fetched from the Rust core via IPC. Editor is CodeMirror 6 with a custom `[[wiki-link]]` extension. Icons from `@lucide/svelte`.
+- **Frontend (Svelte 4):** Handles UI rendering and user interactions. Holds no persistent state — everything is fetched from the Rust core via IPC. Editor is CodeMirror 6 with a custom `[[wiki-link]]` extension. Icons from `lucide-svelte`.
 - **Bridge (Tauri v2 IPC):** Secure communication channel between the Svelte webview and the native system.
 - **Core (Rust):** File system operations, native Git operations via `git2` (libgit2 bindings), and full-text search via file-tree walk on query.
 
 ## Roadmap
 
+See [PLAN.md](PLAN.md) for the full 3-phase roadmap.
+
+Implemented highlights:
 - [x] CodeMirror 6 editor with Markdown syntax highlighting
 - [x] `[[wiki-link]]` highlighting and click-to-navigate
 - [x] Note history view (per-file `git log` + version preview + restore)
@@ -44,6 +48,17 @@ The application is structured as a decoupled system:
 - [x] Full-text search across all notes with fuzzy matching
 - [x] Dark theme (GitHub Dark palette)
 - [x] Vault persistence — last vault reopens on launch
+- [x] Incremental backlinks index
+- [x] Pathspec-optimized note history diff
+- [x] Loading indicators for slow operations
+
+Remaining:
+- [ ] Note templates
+- [ ] Quick preview
+- [ ] Settings UI
+- [ ] File attachments
+- [ ] Tag index
+- [ ] Export
 
 ## Local Development
 
@@ -62,6 +77,10 @@ pnpm tauri dev
 pnpm tauri build
 # Output: src-tauri/target/release/bundle/
 ```
+
+## Project Status
+
+All **16 issues** are closed. The project is stable with core functionality complete. Future work is tracked in [PLAN.md](PLAN.md) Phase 3 and ideas.md.
 
 ## Disclaimer
 
