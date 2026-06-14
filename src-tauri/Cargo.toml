@@ -4,16 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["shell-open", "dialog-open"] }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 walkdir = "2.3"
 regex = "1.9"
 chrono = "0.4"
-# Native Rust git bindings — replaces all shell subprocess wrappers.
-# vendored-libgit2: bundles libgit2 so no system dependency is required.
-# ssh:              enables SSH remote support via libssh2.
 git2 = { version = "0.19", features = ["vendored-libgit2", "ssh"] }

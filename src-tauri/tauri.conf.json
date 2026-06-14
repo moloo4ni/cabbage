@@ -1,28 +1,14 @@
 {
+  "productName": "Cabbage",
+  "version": "0.1.0",
+  "identifier": "com.cabbage.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
   },
-  "package": {
-    "productName": "Cabbage",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "shell": { "open": true },
-      "dialog": { "open": true }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "com.cabbage.app",
-      "icon": []
-    },
-    "security": {
-      "csp": null
-    },
+  "app": {
     "windows": [
       {
         "title": "Cabbage",
@@ -31,6 +17,14 @@
         "resizable": true,
         "fullscreen": false
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": []
   }
 }

@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::collections::HashSet;
-use tauri::{Manager, State};
+use tauri::{Emitter, Manager, State};
+use tauri_plugin_dialog::DialogExt;
 use crate::state::AppState;
 use crate::core::{fs, index, search};
 use crate::git::cli;
@@ -14,12 +15,13 @@ pub async fn pick_and_open_vault(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
 ) -> Result<String, String> {
-    use tauri::api::dialog::blocking::FileDialogBuilder;
-
-    let path = FileDialogBuilder::new()
-        .set_title("Open Vault")
-        .pick_folder()
-        .ok_or("No folder selected")?;
+    let path = app
+        .dialog()
+        .file()
+        .blocking_pick_folder()
+        .ok_or("No folder selected")?
+        .into_path()
+        .map_err(|e| e.to_string())?;
 
     open_vault_path(app, state, path.to_string_lossy().to_string()).await
 }
@@ -35,9 +37,7 @@ pub async fn open_vault(
 }
 
 fn persist_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let config = app.config();
-    let dir = tauri::api::path::app_data_dir(&config)
-        .ok_or("Failed to resolve app data directory")?;
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
@@ -200,7 +200,7 @@ pub async fn sync(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<c
     drop(lock);
 
     cli::sync_vault(&root, &|stage| {
-        let _ = app.emit_all("sync-progress", SyncProgress {
+        let _ = app.emit("sync-progress", SyncProgress {
             stage: stage.to_string(),
         });
     })
