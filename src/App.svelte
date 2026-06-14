@@ -27,6 +27,10 @@
   let showSearch = false;
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
   let showSettings = false;
+  let isLoadingFile = false;
+  let isRefreshingTree = false;
+  let isCreatingNote = false;
+  let isDeletingNote = false;
 
   // ── Vault ────────────────────────────────────────────────────────────────
 
@@ -42,8 +46,13 @@
   }
 
   async function refreshFileTree() {
-    const files = await api.listDirectory('');
-    fileTree.set(files);
+    isRefreshingTree = true;
+    try {
+      const files = await api.listDirectory('');
+      fileTree.set(files);
+    } finally {
+      isRefreshingTree = false;
+    }
   }
 
   // ── Search ─────────────────────────────────────────────────────────────
@@ -95,6 +104,7 @@
   // ── Note navigation ──────────────────────────────────────────────────────
 
   async function openFile(relPath: string) {
+    isLoadingFile = true;
     try {
       const content = await api.readNote(relPath);
       activeNotePath.set(relPath);
@@ -105,6 +115,8 @@
       backlinks.set(links);
     } catch (e) {
       errorMessage = `Failed to open note: ${e}`;
+    } finally {
+      isLoadingFile = false;
     }
   }
 
@@ -147,10 +159,11 @@
   // ── Create note ──────────────────────────────────────────────────────────
 
   async function handleCreateNote() {
-    if (!newNoteName.trim()) return;
+    if (!newNoteName.trim() || isCreatingNote) return;
     const fileName = newNoteName.trim().endsWith('.md')
       ? newNoteName.trim()
       : `${newNoteName.trim()}.md`;
+    isCreatingNote = true;
     try {
       await api.createNote(fileName);
       newNoteName = '';
@@ -159,6 +172,8 @@
       await openFile(fileName);
     } catch (e) {
       errorMessage = `Failed to create note: ${e}`;
+    } finally {
+      isCreatingNote = false;
     }
   }
 
@@ -166,6 +181,8 @@
 
   async function handleDeleteNote(relPath: string) {
     if (!confirm(`Delete "${relPath}"?`)) return;
+    if (isDeletingNote) return;
+    isDeletingNote = true;
     try {
       await api.deleteNote(relPath);
       if ($activeNotePath === relPath) {
@@ -176,6 +193,8 @@
       await refreshFileTree();
     } catch (e) {
       errorMessage = `Failed to delete note: ${e}`;
+    } finally {
+      isDeletingNote = false;
     }
   }
 
@@ -325,7 +344,7 @@
             bind:value={newNoteName}
             on:keydown={(e) => e.key === 'Enter' && handleCreateNote()}
           />
-          <button class="btn" on:click={handleCreateNote}>Create</button>
+          <button class="btn" on:click={handleCreateNote} disabled={isCreatingNote}>{isCreatingNote ? 'Creating…' : 'Create'}</button>
         </div>
       {/if}
 
@@ -359,6 +378,9 @@
       </div>
 
       <div class="file-tree">
+        {#if isRefreshingTree && $fileTree.length === 0}
+          <div class="loading-hint">Loading…</div>
+        {/if}
         {#each $fileTree as node}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -371,7 +393,7 @@
             {#if !node.is_dir}
               <!-- svelte-ignore a11y-click-events-have-key-events -->
               <span
-                class="delete-btn"
+                class="delete-btn {isDeletingNote ? 'disabled' : ''}"
                 title="Delete note"
                 on:click|stopPropagation={() => handleDeleteNote(node.path)}
               ><Trash2 size={12} /></span>
@@ -406,6 +428,8 @@
           on:navigate={handleGraphNavigate}
         />
       </div>
+    {:else if isLoadingFile}
+      <div class="loading-state">Opening note…</div>
     {:else if $activeNotePath}
       <div class="editor-header">
         <span class="path">{$activeNotePath}</span>
@@ -770,7 +794,7 @@
   }
   .backlink-item:hover { opacity: 0.8; }
 
-  .empty-state {
+  .empty-state, .loading-state {
     flex: 1;
     display: flex;
     align-items: center;
@@ -778,6 +802,13 @@
     color: var(--text-muted);
     font-size: 14px;
   }
+  .loading-hint {
+    padding: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .delete-btn.disabled { opacity: 0.4; pointer-events: none; }
 
   /* ── Buttons ─────────────────────────────────────────────────────────────── */
   .btn {

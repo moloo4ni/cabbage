@@ -15,6 +15,7 @@
   let animFrame = 0;
   let simRunning = false;
   let errorMsg = '';
+  let loading = false;
 
   // ── Simulation state ────────────────────────────────────────────────────────
 
@@ -50,12 +51,15 @@
   // ── Load and initialise ─────────────────────────────────────────────────────
 
   async function loadGraph() {
+    loading = true;
+    errorMsg = '';
     try {
-      errorMsg = '';
       const data: GraphData = await api.getGraph();
       initSimulation(data);
     } catch (e) {
       errorMsg = `Failed to load graph: ${e}`;
+    } finally {
+      loading = false;
     }
   }
 
@@ -333,6 +337,10 @@
 </script>
 
 <div class="graph-container">
+  {#if loading}
+    <div class="graph-loading">Loading graph…</div>
+  {/if}
+
   {#if errorMsg}
     <div class="graph-error">{errorMsg}</div>
   {/if}
@@ -377,6 +385,15 @@
     cursor: grabbing;
   }
 
+  .graph-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-muted);
+    font-size: 13px;
+    z-index: 10;
+  }
   .graph-error {
     position: absolute;
     top: 10px;
