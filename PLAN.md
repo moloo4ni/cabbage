@@ -22,14 +22,15 @@
 ## Phase 3 — Power Features
 
 - [ ] Note templates — create notes from user-defined templates with `{{date}}` placeholders
-- [ ] Quick preview — hover or side-panel preview of a note without opening it
+- [ ] Quick preview — side-panel preview of a note without opening it
 - [ ] Settings UI — persistent settings panel (vault path, theme, editor font size, line wrap)
 - [ ] File attachments — copy/paste or drag files into vault
 - [ ] Tag index — `#tag` parsing and navigation pane
 - [ ] Export — single note or whole vault to HTML/PDF
-- [ ] Plugin system (post-MVP) — WASM or Lua scripts for custom pipelines
 
 ## Future Ideas
+
+- Plugin system — WASM or Lua scripts for custom pipelines
 
 - Graph: node filtering, minimap, search-to-locate
 - Multi-vault: open multiple vaults, cross-vault search

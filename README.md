@@ -15,7 +15,7 @@ Notes are standard `.md` files. As you edit, Cabbage saves your changes and sile
 - Full-text search (Ctrl+P) — fuzzy matching over filenames and content with result snippets
 - Backlinks panel — shows which notes link to the currently open note
 - Note history — browse previous versions of any note, preview, and restore
-- Graph view — force-directed canvas showing all notes and their `[[wikilink]]` connections; pan, zoom, and click to navigate
+- Graph view — force-directed canvas showing all notes and their `[[wiki-link]]` connections; pan, zoom, and click to navigate
 - One-click sync with any Git remote (fetch, rebase, push)
 - Vault persists between sessions — reopens automatically on launch
 - Dark theme — auto-detects system preference, toggleable from the Settings dropdown
@@ -36,13 +36,11 @@ graph LR
     Rust <--> Git
 ```
 
-The UI (Svelte) communicates with the Rust backend through Tauri IPC. The backend handles all file system operations, Git versioning, and search queries.
+The UI communicates with the Rust backend through Tauri IPC. The backend handles file system, Git, and search operations.
 
 ## Roadmap
 
-See [PLAN.md](PLAN.md) for the full 3-phase breakdown.
-
-Phase 1 (Stability) and Phase 2 (Core Features) are complete. Phase 3 (Power Features) tracks future work: note templates, quick preview, settings UI, file attachments, tag index, export, and plugin system.
+Phase 1 and Phase 2 are complete. See [PLAN.md](PLAN.md) for the full roadmap.
 
 ## Local Development
 
