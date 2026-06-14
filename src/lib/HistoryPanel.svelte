@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { api, type CommitInfo } from './api';
-  import { RotateCcw } from '@lucide/svelte';
+  import { RotateCcw } from 'lucide-svelte';
 
   export let relPath: string;
   export let onRestore: (content: string) => void;

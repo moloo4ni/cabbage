@@ -8,12 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@lucide/svelte':
-        specifier: ^1.17.0
-        version: 1.17.0(svelte@4.2.20)
       '@tauri-apps/api':
         specifier: ^2
         version: 2.11.0
+      lucide-svelte:
+        specifier: ^0.468.0
+        version: 0.468.0(svelte@4.2.20)
     devDependencies:
       '@codemirror/commands':
         specifier: ^6.7.1
@@ -259,11 +259,6 @@ packages:
 
   '@lezer/markdown@1.6.3':
     resolution: {integrity: sha512-jpGm5Ps+XErS+xA4urw7ogEGkeZOahVQF21Z6oECF0sj+2liwZopd2+I8uH5I/vZsRuuze3OxBREIANLf6KKUw==}
-
-  '@lucide/svelte@1.17.0':
-    resolution: {integrity: sha512-q06YCFBN5CO8cd1ADmLCxWRVMVb7xxvHzqC0lvNoxGa+FLW6Cd1Y1AOxgbQk4Iwe68vkAMCRveNHint4WoaVKg==}
-    peerDependencies:
-      svelte: ^5
 
   '@marijn/find-cluster-break@1.0.2':
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
@@ -647,6 +642,12 @@ packages:
 
   locate-character@3.0.0:
     resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
+
+  lucide-svelte@0.468.0:
+    resolution: {integrity: sha512-n0ecAFtCY5LEeL+PJ1Xj4n3c2gzj8tMpak0KMGnvoSJEjCsCnRB0mekBtJZAo7beyynW9Qj5Um1KfMBAeTNplw==}
+    deprecated: Package deprecated. Please use @lucide/svelte instead.
+    peerDependencies:
+      svelte: ^3 || ^4 || ^5.0.0-next.42
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -1054,10 +1055,6 @@ snapshots:
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
 
-  '@lucide/svelte@1.17.0(svelte@4.2.20)':
-    dependencies:
-      svelte: 4.2.20
-
   '@marijn/find-cluster-break@1.0.2': {}
 
   '@rollup/rollup-android-arm-eabi@4.60.3':
@@ -1360,6 +1357,10 @@ snapshots:
   kleur@4.1.5: {}
 
   locate-character@3.0.0: {}
+
+  lucide-svelte@0.468.0(svelte@4.2.20):
+    dependencies:
+      svelte: 4.2.20
 
   magic-string@0.30.21:
     dependencies:

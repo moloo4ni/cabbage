@@ -9,7 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import {
     Share2, RefreshCw, Plus, File, Trash2, X, History, Folder, Sun, Moon, Search as SearchIcon, Settings
-  } from '@lucide/svelte';
+  } from 'lucide-svelte';
 
   import type { SearchResult } from './lib/api';
 
