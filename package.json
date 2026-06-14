@@ -17,7 +17,7 @@
     "@codemirror/commands": "^6.7.1",
     "@codemirror/lang-markdown": "^6.3.1",
     "@codemirror/state": "^6.5.2",
-    "@codemirror/view": "^6.36.3",
+    "@codemirror/view": "^6.43.1",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@tauri-apps/cli": "^2",
     "@tsconfig/svelte": "^5.0.2",
