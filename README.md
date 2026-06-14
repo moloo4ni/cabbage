@@ -10,32 +10,15 @@ Notes are standard `.md` files. As you edit, Cabbage saves your changes and sile
 
 ## Features
 
-### Core editing
-
-- CodeMirror 6 editor with Markdown syntax highlighting, line wrapping, minimal theme
-- `[[wiki-links]]` highlighted inline; Ctrl/Cmd+click navigates to the linked note (creates it if it does not exist)
-- Auto-save with a 1.5 s debounce — every save triggers an automatic local Git commit
-- Full-text search (Ctrl+P / Cmd+P) — fuzzy matches filenames (priority) and content with snippets, up to 20 results
-- Incremental backlinks panel — notes that link to the current note, rebuilt per-file instead of full tree scan
-- Note history — browse up to 50 commits for the active note, preview any version, restore with one click
-
-### Vault & sync
-
-- Open a vault via native folder-picker; last vault is persisted and reopens automatically on launch
-- File tree sidebar — browse, create, and delete notes
-- Sync button runs fetch, fast-forward or rebase, and push — all via native libgit2 (no `git` binary required) with progress events
-- Git is optional — vaults work without a remote
-
-### Graph view
-
-- Canvas-based force-directed graph of all notes and `[[wikilink]]` connections
-- Pan, zoom, and click to navigate
-
-### UI polish
-
-- Dark theme (GitHub Dark palette), auto-detects `prefers-color-scheme`, toggleable from Settings dropdown
-- Loading indicators for slow operations (file open, tree refresh, graph load, note create/delete)
-- Inline error bar for failed operations
+- Markdown editor with syntax highlighting, line wrapping, and `[[wiki-link]]` navigation — Ctrl/Cmd+click follows links and creates missing notes
+- Auto-save (1.5 s debounce) with automatic local Git commits
+- Full-text search (Ctrl+P) — fuzzy matching over filenames and content with result snippets
+- Backlinks panel — shows which notes link to the currently open note
+- Note history — browse previous versions of any note, preview, and restore
+- Graph view — force-directed canvas showing all notes and their `[[wikilink]]` connections; pan, zoom, and click to navigate
+- One-click sync with any Git remote (fetch, rebase, push)
+- Vault persists between sessions — reopens automatically on launch
+- Dark theme — auto-detects system preference, toggleable from the Settings dropdown
 
 ## Architecture
 
@@ -53,11 +36,7 @@ graph LR
     Rust <--> Git
 ```
 
-The application is structured as a decoupled system:
-
-- **Frontend (Svelte 4):** Handles UI rendering and user interactions. Holds no persistent state — everything is fetched from the Rust core via IPC. Editor is CodeMirror 6 with a custom `[[wiki-link]]` extension. Icons from `lucide-svelte`.
-- **Bridge (Tauri v2 IPC):** Secure communication channel between the Svelte webview and the native system.
-- **Core (Rust):** File system operations, native Git operations via `git2` (libgit2 bindings), and full-text search via file-tree walk on query.
+The UI (Svelte) communicates with the Rust backend through Tauri IPC. The backend handles all file system operations, Git versioning, and search queries.
 
 ## Roadmap
 
@@ -74,13 +53,9 @@ git clone https://github.com/moloo4ni/cabbage.git
 cd cabbage
 pnpm install
 pnpm tauri dev
-```
 
-**Build a release binary:**
-
-```bash
+# Build a release binary
 pnpm tauri build
-# Output: src-tauri/target/release/bundle/
 ```
 
 ## License
