@@ -41,7 +41,7 @@ fn current_branch(repo: &Repository) -> Result<String, String> {
     let head = repo.head().map_err(|_| "No HEAD reference found".to_string())?;
     let name = head
         .shorthand()
-        .ok_or_else(|| "HEAD has no shorthand name".to_string())?;
+        .map_err(|e| e.to_string())?;
     Ok(name.to_string())
 }
 
@@ -203,7 +203,7 @@ pub fn get_note_history(vault_path: &Path, rel_path: &str) -> Result<Vec<CommitI
 
             results.push(CommitInfo {
                 hash: oid.to_string(),
-                message: commit.summary().unwrap_or("").to_string(),
+                message: commit.summary().ok().flatten().unwrap_or("").to_string(),
                 timestamp,
                 author: commit.author().name().unwrap_or("").to_string(),
             });
