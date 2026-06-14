@@ -39,11 +39,74 @@ Notes are standard `.md` files. As you edit, Cabbage saves your changes and sile
 
 ## Architecture
 
+```mermaid
+graph TB
+  subgraph Frontend["Frontend (Svelte 4)"]
+    Editor["Editor (CodeMirror 6)"]
+    Graph["Graph View (Canvas)"]
+    Sidebar["Sidebar, Search, History"]
+  end
+  subgraph Bridge["Bridge (Tauri v2 IPC)"]
+    Commands["Commands (13 Tauri commands)"]
+  end
+  subgraph Core["Core (Rust)"]
+    FS["File System (walkdir, regex)"]
+    Git["Git (libgit2 / git2)"]
+    Index["Search & Backlinks Index"]
+  end
+
+  Editor -->|invoke()| Commands
+  Graph -->|invoke()| Commands
+  Sidebar -->|invoke()| Commands
+  Commands -->|async| FS
+  Commands -->|async| Git
+  Commands -->|async| Index
+```
+
 The application is structured as a decoupled system:
 
 - **Frontend (Svelte 4):** Handles UI rendering and user interactions. Holds no persistent state — everything is fetched from the Rust core via IPC. Editor is CodeMirror 6 with a custom `[[wiki-link]]` extension. Icons from `lucide-svelte`.
 - **Bridge (Tauri v2 IPC):** Secure communication channel between the Svelte webview and the native system.
 - **Core (Rust):** File system operations, native Git operations via `git2` (libgit2 bindings), and full-text search via file-tree walk on query.
+
+### Auto-save flow
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Editor
+  participant Debounce as Debounce (1.5s)
+  participant Rust as Rust Core
+  participant Git as Git (libgit2)
+
+  User->>Editor: Types in note
+  Editor->>Debounce: Reset timer
+  Note over Debounce: Waits 1.5s
+  Debounce->>Rust: write_note(content)
+  Rust->>Rust: Save to .md file
+  Rust->>Git: auto_commit(file)
+  Git-->>Rust: commit created
+  Rust->>Rust: update_index(file)
+  Note over Rust: Incremental backlinks<br/>(re-scan only this file)
+  Rust-->>Editor: OK
+```
+
+### Sync flow
+
+```mermaid
+flowchart LR
+  A[User clicks Sync] --> B{Uncommitted changes?}
+  B -->|Yes| C[Block with error]
+  B -->|No| D[Fetch from remote]
+  D --> E{Merge analysis}
+  E -->|Up to date| F[Done]
+  E -->|Fast-forward| G[Fast-forward local]
+  E -->|Diverged| H[Rebase local on remote]
+  G --> I[Push]
+  H --> I
+  I --> J[Done]
+  H -->|Conflict| K[Abort with error]
+```
 
 ## Roadmap
 
