@@ -8,23 +8,33 @@ A **vault** is simply a local directory on your file system. Open any folder in 
 
 Notes are standard `.md` files. As you edit, Cabbage saves your changes and silently commits them to the local repository. Syncing with another machine is a regular `git push` and `git pull --rebase` against any remote you configure (GitHub, GitLab, a self-hosted server — anything that speaks Git over SSH or HTTPS).
 
-## Current State
+## Features
 
-The core read/write/sync loop is working:
+### Core editing
 
-- Open a vault via a native folder-picker dialog — last vault is persisted and reopens automatically on launch
-- Browse the file tree in the sidebar
-- Create and delete notes (with loading indicators)
-- Edit notes with CodeMirror 6 — Markdown syntax highlighting, line wrapping, minimal theme
+- CodeMirror 6 editor with Markdown syntax highlighting, line wrapping, minimal theme
 - `[[wiki-links]]` highlighted inline; Ctrl/Cmd+click navigates to the linked note (creates it if it does not exist)
 - Auto-save with a 1.5 s debounce — every save triggers an automatic local Git commit
-- Full-text search — Ctrl+P / Cmd+P opens a fuzzy search box that matches filenames (priority) and content with snippets (up to 20 results)
-- Graph view — canvas force-directed graph of all notes and `[[wikilink]]` connections
-- Sync button runs fetch → fast-forward or rebase → push, all via native libgit2 (no `git` binary required) with progress events
-- Incremental backlinks index — notes that link to the current note are shown via per-file scan (no full tree rebuild on every change)
-- History panel — browse up to 50 commits for the active note, preview any version, restore with one click
-- Dark theme — GitHub Dark palette, auto-detects `prefers-color-scheme`, toggleable from Settings dropdown
-- Loading states — spinners for file open, file tree refresh, graph load, note create/delete
+- Full-text search (Ctrl+P / Cmd+P) — fuzzy matches filenames (priority) and content with snippets, up to 20 results
+- Incremental backlinks panel — notes that link to the current note, rebuilt per-file instead of full tree scan
+- Note history — browse up to 50 commits for the active note, preview any version, restore with one click
+
+### Vault & sync
+
+- Open a vault via native folder-picker; last vault is persisted and reopens automatically on launch
+- File tree sidebar — browse, create, and delete notes
+- Sync button runs fetch, fast-forward or rebase, and push — all via native libgit2 (no `git` binary required) with progress events
+- Git is optional — vaults work without a remote
+
+### Graph view
+
+- Canvas-based force-directed graph of all notes and `[[wikilink]]` connections
+- Pan, zoom, and click to navigate
+
+### UI polish
+
+- Dark theme (GitHub Dark palette), auto-detects `prefers-color-scheme`, toggleable from Settings dropdown
+- Loading indicators for slow operations (file open, tree refresh, graph load, note create/delete)
 - Inline error bar for failed operations
 
 ## Architecture
@@ -37,28 +47,9 @@ The application is structured as a decoupled system:
 
 ## Roadmap
 
-See [PLAN.md](PLAN.md) for the full 3-phase roadmap.
+See [PLAN.md](PLAN.md) for the full 3-phase breakdown.
 
-Implemented highlights:
-- [x] CodeMirror 6 editor with Markdown syntax highlighting
-- [x] `[[wiki-link]]` highlighting and click-to-navigate
-- [x] Note history view (per-file `git log` + version preview + restore)
-- [x] Graph view — canvas force-directed graph of all notes and wikilink connections
-- [x] Native Rust Git bindings — `git2` / libgit2, no system `git` binary required
-- [x] Full-text search across all notes with fuzzy matching
-- [x] Dark theme (GitHub Dark palette)
-- [x] Vault persistence — last vault reopens on launch
-- [x] Incremental backlinks index
-- [x] Pathspec-optimized note history diff
-- [x] Loading indicators for slow operations
-
-Remaining:
-- [ ] Note templates
-- [ ] Quick preview
-- [ ] Settings UI
-- [ ] File attachments
-- [ ] Tag index
-- [ ] Export
+Phase 1 (Stability) and Phase 2 (Core Features) are complete. Phase 3 (Power Features) tracks future work: note templates, quick preview, settings UI, file attachments, tag index, export, and plugin system.
 
 ## Local Development
 
@@ -78,9 +69,9 @@ pnpm tauri build
 # Output: src-tauri/target/release/bundle/
 ```
 
-## Project Status
+## License
 
-All **16 issues** are closed. The project is stable with core functionality complete. Future work is tracked in [PLAN.md](PLAN.md) Phase 3 and ideas.md.
+MIT — see [LICENSE](LICENSE).
 
 ## Disclaimer
 
